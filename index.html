@@ -3,303 +3,281 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WindQuant Terminal</title>
+    <title>WindQuant</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
-            --bg: #000000;
-            --header-bg: #111111;
-            --border: #222222;
-            --text: #e3e3e3;
-            --text-dim: #888888;
-            --text-dimmer: #555555;
-            --green: #00ff88;
-            --red: #ff3333;
-            --blue: #3399ff;
-            --yellow: #ffcc00;
+            --bg: #0d0d0f;
+            --surface: #161618;
+            --surface-2: #1c1c1f;
+            --border: rgba(255,255,255,0.08);
+            --border-hover: rgba(255,255,255,0.12);
+            --text: #f0f0f0;
+            --text-2: #8a8a8e;
+            --text-3: #5c5c5e;
+            --green: #22c55e;
+            --green-bg: rgba(34,197,94,0.08);
+            --red: #ef4444;
+            --red-bg: rgba(239,68,68,0.08);
+            --accent: #3b82f6;
         }
         
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         
         body {
-            font-family: 'IBM Plex Sans', -apple-system, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--bg);
             color: var(--text);
-            font-size: 13px;
-            line-height: 1.4;
-            min-height: 100vh;
-        }
-        
-        .mono {
-            font-family: 'IBM Plex Mono', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
         
         /* Header */
         .header {
-            background: var(--header-bg);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 56px;
+            background: rgba(13,13,15,0.9);
+            backdrop-filter: blur(20px);
             border-bottom: 1px solid var(--border);
-            padding: 0 16px;
-            height: 48px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+        }
+        
+        .header-inner {
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 100;
         }
         
-        .header-left {
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+        }
+        
+        .logo-icon {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--accent), #60a5fa);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .logo-icon svg {
+            width: 16px;
+            height: 16px;
+            color: white;
+        }
+        
+        .nav {
             display: flex;
             align-items: center;
             gap: 32px;
         }
         
-        .logo {
-            font-size: 15px;
-            font-weight: 600;
-            letter-spacing: -0.3px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .logo-dot {
-            width: 8px;
-            height: 8px;
-            background: var(--green);
-            border-radius: 50%;
-            animation: blink 2s infinite;
-        }
-        
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-        
-        .nav-item {
-            color: var(--text-dim);
+        .nav a {
+            color: var(--text-2);
             text-decoration: none;
-            padding: 4px 0;
-            border-bottom: 2px solid transparent;
-            transition: all 0.15s;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
         }
         
-        .nav-item:hover, .nav-item.active {
+        .nav a:hover, .nav a.active {
             color: var(--text);
-            border-bottom-color: var(--blue);
         }
         
         .header-right {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 20px;
         }
         
-        .clock {
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 12px;
-            color: var(--text-dim);
-        }
-        
-        .status-bar {
-            background: var(--bg);
-            border-bottom: 1px solid var(--border);
-            padding: 8px 16px;
-            display: flex;
-            align-items: center;
-            gap: 24px;
-            font-size: 12px;
-            overflow-x: auto;
-        }
-        
-        .status-item {
+        .live-badge {
             display: flex;
             align-items: center;
             gap: 6px;
-            white-space: nowrap;
+            font-size: 12px;
+            color: var(--green);
         }
         
-        .status-label {
-            color: var(--text-dimmer);
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--green);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
         }
         
-        .status-value {
-            font-family: 'IBM Plex Mono', monospace;
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        
+        .clock {
+            font-size: 13px;
             font-weight: 500;
+            color: var(--text-2);
+            font-variant-numeric: tabular-nums;
         }
-        
-        .status-up { color: var(--green); }
-        .status-down { color: var(--red); }
         
         /* Main */
         .main {
-            padding: 16px;
-            max-width: 1600px;
+            max-width: 1400px;
             margin: 0 auto;
+            padding: 80px 24px 40px;
         }
         
-        /* Market Overview Bar */
+        /* Market Bar */
         .market-bar {
-            display: flex;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
             gap: 1px;
             background: var(--border);
             border: 1px solid var(--border);
-            margin-bottom: 16px;
+            border-radius: 12px;
             overflow: hidden;
+            margin-bottom: 24px;
+        }
+        
+        @media (max-width: 768px) {
+            .market-bar {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
         
         .market-item {
-            flex: 1;
-            background: var(--bg);
-            padding: 12px 16px;
-            min-width: 140px;
+            background: var(--surface);
+            padding: 16px 20px;
         }
         
-        .market-item-header {
-            color: var(--text-dimmer);
-            font-size: 11px;
+        .market-item-label {
+            font-size: 12px;
+            color: var(--text-3);
             margin-bottom: 4px;
         }
         
         .market-item-value {
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 600;
+            font-variant-numeric: tabular-nums;
             margin-bottom: 2px;
         }
         
         .market-item-change {
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            font-variant-numeric: tabular-nums;
         }
         
-        /* Grid */
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 380px;
-            gap: 16px;
+        .up { color: var(--green); }
+        .down { color: var(--red); }
+        
+        /* Section */
+        .section {
+            margin-bottom: 24px;
         }
         
-        @media (max-width: 1024px) {
-            .grid { grid-template-columns: 1fr; }
-        }
-        
-        /* Panel */
-        .panel {
-            background: var(--bg);
-            border: 1px solid var(--border);
-        }
-        
-        .panel-header {
+        .section-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 12px 16px;
-            border-bottom: 1px solid var(--border);
-            background: var(--header-bg);
+            margin-bottom: 12px;
         }
         
-        .panel-title {
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        
+        .section-meta {
             font-size: 12px;
+            color: var(--text-3);
+        }
+        
+        /* Grid */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 24px;
+        }
+        
+        @media (max-width: 1024px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Card */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .card-title {
+            font-size: 13px;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             color: var(--text);
         }
         
-        .panel-body {
+        .card-body {
             padding: 0;
-        }
-        
-        /* Table */
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        .data-table th {
-            text-align: left;
-            padding: 10px 16px;
-            font-size: 11px;
-            font-weight: 500;
-            color: var(--text-dimmer);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            background: var(--header-bg);
-            border-bottom: 1px solid var(--border);
-        }
-        
-        .data-table td {
-            padding: 10px 16px;
-            border-bottom: 1px solid var(--border);
-            font-size: 13px;
-        }
-        
-        .data-table tr:hover td {
-            background: rgba(255,255,255,0.02);
-        }
-        
-        .data-table tr:last-child td {
-            border-bottom: none;
-        }
-        
-        .col-name {
-            width: 35%;
-        }
-        
-        .col-price {
-            width: 25%;
-            text-align: right;
-        }
-        
-        .col-change {
-            width: 25%;
-            text-align: right;
-        }
-        
-        .col-percent {
-            width: 15%;
-            text-align: right;
-        }
-        
-        .name-text {
-            font-weight: 500;
-        }
-        
-        .name-code {
-            font-size: 11px;
-            color: var(--text-dimmer);
-            font-family: 'IBM Plex Mono', monospace;
-        }
-        
-        .price-text {
-            font-family: 'IBM Plex Mono', monospace;
-            font-weight: 500;
-        }
-        
-        .change-text {
-            font-family: 'IBM Plex Mono', monospace;
-            font-weight: 500;
         }
         
         /* Tabs */
         .tabs {
             display: flex;
-            gap: 0;
+            gap: 2px;
+            background: var(--surface-2);
+            padding: 3px;
+            border-radius: 8px;
         }
         
         .tab {
-            padding: 8px 16px;
-            font-size: 12px;
+            padding: 6px 14px;
+            font-size: 13px;
             font-weight: 500;
-            color: var(--text-dimmer);
+            color: var(--text-2);
+            background: transparent;
+            border: none;
+            border-radius: 6px;
             cursor: pointer;
-            border: 1px solid var(--border);
-            margin-left: -1px;
-            background: var(--bg);
-            transition: all 0.15s;
+            transition: all 0.2s;
         }
         
         .tab:hover {
@@ -307,9 +285,88 @@
         }
         
         .tab.active {
+            background: var(--surface);
             color: var(--text);
-            background: var(--header-bg);
-            border-bottom-color: var(--header-bg);
+        }
+        
+        /* Table */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .table th {
+            text-align: left;
+            padding: 12px 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-3);
+            background: var(--surface-2);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .table th:last-child {
+            text-align: right;
+        }
+        
+        .table td {
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+        
+        .table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .table tr:hover td {
+            background: rgba(255,255,255,0.01);
+        }
+        
+        .table td:last-child {
+            text-align: right;
+        }
+        
+        .stock-name {
+            font-weight: 500;
+            color: var(--text);
+        }
+        
+        .stock-code {
+            font-size: 12px;
+            color: var(--text-3);
+            margin-top: 2px;
+        }
+        
+        .price {
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .change {
+            font-weight: 500;
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .change-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .change-badge.up {
+            color: var(--green);
+            background: var(--green-bg);
+        }
+        
+        .change-badge.down {
+            color: var(--red);
+            background: var(--red-bg);
         }
         
         /* Signal */
@@ -317,38 +374,41 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 16px;
+            padding: 16px 20px;
             border-bottom: 1px solid var(--border);
+            transition: background 0.2s;
         }
         
         .signal-item:last-child {
             border-bottom: none;
         }
         
+        .signal-item:hover {
+            background: rgba(255,255,255,0.01);
+        }
+        
         .signal-left {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 14px;
         }
         
         .signal-icon {
             width: 40px;
             height: 40px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 4px;
             font-size: 18px;
         }
         
         .signal-icon.buy {
-            background: rgba(0,255,136,0.1);
-            border: 1px solid rgba(0,255,136,0.2);
+            background: var(--green-bg);
         }
         
         .signal-icon.hold {
-            background: rgba(255,204,0,0.1);
-            border: 1px solid rgba(255,204,0,0.2);
+            background: rgba(234,179,8,0.08);
         }
         
         .signal-label {
@@ -357,32 +417,58 @@
         }
         
         .signal-label.buy { color: var(--green); }
-        .signal-label.hold { color: var(--yellow); }
+        .signal-label.hold { color: #eab308; }
         
         .signal-stock {
-            font-size: 12px;
-            color: var(--text-dimmer);
+            font-size: 13px;
+            color: var(--text-3);
         }
         
         .signal-score {
-            font-family: 'IBM Plex Mono', monospace;
             font-size: 24px;
-            font-weight: 600;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
         }
         
         .signal-score.buy { color: var(--green); }
-        .signal-score.hold { color: var(--yellow); }
+        .signal-score.hold { color: #eab308; }
+        
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1px;
+            background: var(--border);
+        }
+        
+        .stat-item {
+            background: var(--surface);
+            padding: 16px 20px;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-3);
+            margin-bottom: 4px;
+        }
+        
+        .stat-value {
+            font-size: 20px;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
         
         /* Footer */
         .footer {
-            margin-top: 16px;
-            padding: 16px;
+            max-width: 1400px;
+            margin: 40px auto 0;
+            padding: 20px 24px;
             border-top: 1px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            font-size: 11px;
-            color: var(--text-dimmer);
+            font-size: 12px;
+            color: var(--text-3);
         }
         
         /* Loading */
@@ -391,17 +477,16 @@
             align-items: center;
             justify-content: center;
             padding: 40px;
-            color: var(--text-dimmer);
+            color: var(--text-3);
         }
         
         .spinner {
-            width: 16px;
-            height: 16px;
+            width: 20px;
+            height: 20px;
             border: 2px solid var(--border);
-            border-top-color: var(--blue);
+            border-top-color: var(--accent);
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
-            margin-right: 8px;
         }
         
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -410,190 +495,169 @@
 <body>
     <!-- Header -->
     <header class="header">
-        <div class="header-left">
+        <div class="header-inner">
             <div class="logo">
-                <div class="logo-dot"></div>
+                <div class="logo-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                    </svg>
+                </div>
                 WindQuant
             </div>
-            <nav class="hidden md:flex items-center gap-24">
-                <a href="#" class="nav-item active">市场</a>
-                <a href="#" class="nav-item">股票</a>
-                <a href="#" class="nav-item">组合</a>
-                <a href="#" class="nav-item">资讯</a>
+            <nav class="nav">
+                <a href="#" class="active">市场</a>
+                <a href="#">股票</a>
+                <a href="#">资讯</a>
             </nav>
-        </div>
-        <div class="header-right">
-            <div class="clock" id="clock">--:--:--</div>
-            <div class="text-dimmer">|</div>
-            <div class="text-dimmer" style="font-size: 12px;">数据延迟 15分钟</div>
+            <div class="header-right">
+                <div class="live-badge">
+                    <span class="live-dot"></span>
+                    实时
+                </div>
+                <div class="clock" id="clock">--:--:--</div>
+            </div>
         </div>
     </header>
     
-    <!-- Status Bar -->
-    <div class="status-bar">
-        <div class="status-item">
-            <span class="status-label">市场:</span>
-            <span class="status-value">A股</span>
-        </div>
-        <div class="status-item">
-            <span class="status-label">USD/CNY:</span>
-            <span class="status-value">7.2485</span>
-        </div>
-        <div class="status-item">
-            <span class="status-label">黄金:</span>
-            <span class="status-value">2345.60</span>
-            <span class="status-up">+0.32%</span>
-        </div>
-        <div class="status-item">
-            <span class="status-label">原油:</span>
-            <span class="status-value">83.45</span>
-            <span class="status-down">-0.58%</span>
-        </div>
-        <div class="status-item">
-            <span class="status-label">比特币:</span>
-            <span class="status-value">67450</span>
-            <span class="status-up">+2.15%</span>
-        </div>
-    </div>
-    
     <!-- Main -->
     <main class="main">
-        <!-- Market Overview -->
+        <!-- Market Bar -->
         <div class="market-bar" id="marketBar">
             <div class="market-item">
-                <div class="market-item-header">上证指数</div>
-                <div class="market-item-value" id="idx1-price">--</div>
-                <div class="market-item-change" id="idx1-change">--</div>
+                <div class="market-item-label">上证指数</div>
+                <div class="market-item-value" id="idx0">--</div>
+                <div class="market-item-change" id="idx0c">--</div>
             </div>
             <div class="market-item">
-                <div class="market-item-header">深证成指</div>
-                <div class="market-item-value" id="idx2-price">--</div>
-                <div class="market-item-change" id="idx2-change">--</div>
+                <div class="market-item-label">深证成指</div>
+                <div class="market-item-value" id="idx1">--</div>
+                <div class="market-item-change" id="idx1c">--</div>
             </div>
             <div class="market-item">
-                <div class="market-item-header">创业板</div>
-                <div class="market-item-value" id="idx3-price">--</div>
-                <div class="market-item-change" id="idx3-change">--</div>
+                <div class="market-item-label">创业板</div>
+                <div class="market-item-value" id="idx2">--</div>
+                <div class="market-item-change" id="idx2c">--</div>
             </div>
             <div class="market-item">
-                <div class="market-item-header">沪深300</div>
-                <div class="market-item-value" id="idx4-price">--</div>
-                <div class="market-item-change" id="idx4-change">--</div>
+                <div class="market-item-label">沪深300</div>
+                <div class="market-item-value" id="idx3">--</div>
+                <div class="market-item-change" id="idx3c">--</div>
             </div>
             <div class="market-item">
-                <div class="market-item-header">科创50</div>
-                <div class="market-item-value" id="idx5-price">--</div>
-                <div class="market-item-change" id="idx5-change">--</div>
+                <div class="market-item-label">科创50</div>
+                <div class="market-item-value" id="idx4">--</div>
+                <div class="market-item-change" id="idx4c">--</div>
             </div>
         </div>
         
-        <!-- Content Grid -->
-        <div class="grid">
-            <!-- Left Column -->
+        <!-- Content -->
+        <div class="content-grid">
+            <!-- Left -->
             <div>
-                <!-- Stocks Panel -->
-                <div class="panel">
-                    <div class="panel-header">
-                        <span class="panel-title">实时行情</span>
+                <!-- Stocks Table -->
+                <div class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">实时行情</h2>
                         <div class="tabs">
-                            <div class="tab active" onclick="switchTab(this, 'cn')">A股</div>
-                            <div class="tab" onclick="switchTab(this, 'us')">美股</div>
+                            <button class="tab active" onclick="switchTab(this, 'cn')">A股</button>
+                            <button class="tab" onclick="switchTab(this, 'us')">美股</button>
                         </div>
                     </div>
-                    <div class="panel-body">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th class="col-name">名称/代码</th>
-                                    <th class="col-price">最新价</th>
-                                    <th class="col-change">涨跌</th>
-                                    <th class="col-percent">涨跌幅</th>
-                                </tr>
-                            </thead>
-                            <tbody id="stocksTable">
-                                <tr><td colspan="4" class="loading"><div class="spinner"></div>加载中...</td></tr>
-                            </tbody>
-                        </table>
+                    <div class="card">
+                        <div class="card-body">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>名称 / 代码</th>
+                                        <th>最新价</th>
+                                        <th>涨跌幅</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="stocksTable">
+                                    <tr><td colspan="3" class="loading"><div class="spinner"></div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
             
-            <!-- Right Column -->
+            <!-- Right -->
             <div>
                 <!-- AI Signals -->
-                <div class="panel">
-                    <div class="panel-header">
-                        <span class="panel-title">AI 智能信号</span>
+                <div class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">AI 智能信号</h2>
                     </div>
-                    <div class="panel-body">
-                        <div class="signal-item">
-                            <div class="signal-left">
-                                <div class="signal-icon buy">📈</div>
-                                <div>
-                                    <div class="signal-label buy">强烈买入</div>
-                                    <div class="signal-stock">上证指数</div>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="signal-item">
+                                <div class="signal-left">
+                                    <div class="signal-icon buy">📈</div>
+                                    <div>
+                                        <div class="signal-label buy">强烈买入</div>
+                                        <div class="signal-stock">上证指数</div>
+                                    </div>
                                 </div>
+                                <div class="signal-score buy">95</div>
                             </div>
-                            <div class="signal-score buy">95</div>
-                        </div>
-                        <div class="signal-item">
-                            <div class="signal-left">
-                                <div class="signal-icon hold">⚡</div>
-                                <div>
-                                    <div class="signal-label hold">注意回调</div>
-                                    <div class="signal-stock">创业板</div>
+                            <div class="signal-item">
+                                <div class="signal-left">
+                                    <div class="signal-icon buy">💎</div>
+                                    <div>
+                                        <div class="signal-label buy">价值发现</div>
+                                        <div class="signal-stock">宁德时代 300750</div>
+                                    </div>
                                 </div>
+                                <div class="signal-score buy">88</div>
                             </div>
-                            <div class="signal-score hold">68</div>
-                        </div>
-                        <div class="signal-item">
-                            <div class="signal-left">
-                                <div class="signal-icon buy">💎</div>
-                                <div>
-                                    <div class="signal-label buy">价值发现</div>
-                                    <div class="signal-stock">宁德时代 300750</div>
+                            <div class="signal-item">
+                                <div class="signal-left">
+                                    <div class="signal-icon hold">⚡</div>
+                                    <div>
+                                        <div class="signal-label hold">注意回调</div>
+                                        <div class="signal-stock">创业板</div>
+                                    </div>
                                 </div>
+                                <div class="signal-score hold">68</div>
                             </div>
-                            <div class="signal-score buy">88</div>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Quick Stats -->
-                <div class="panel" style="margin-top: 16px;">
-                    <div class="panel-header">
-                        <span class="panel-title">市场统计</span>
+                <!-- Stats -->
+                <div class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">市场统计</h2>
                     </div>
-                    <div class="panel-body" style="padding: 16px;">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                            <div>
-                                <div style="font-size: 11px; color: var(--text-dimmer); margin-bottom: 4px;">上涨</div>
-                                <div style="font-size: 20px; font-weight: 600; color: var(--green);" id="statUp">--</div>
-                            </div>
-                            <div>
-                                <div style="font-size: 11px; color: var(--text-dimmer); margin-bottom: 4px;">下跌</div>
-                                <div style="font-size: 20px; font-weight: 600; color: var(--red);" id="statDown">--</div>
-                            </div>
-                            <div>
-                                <div style="font-size: 11px; color: var(--text-dimmer); margin-bottom: 4px;">成交额</div>
-                                <div style="font-size: 20px; font-weight: 600;" id="statVol">--</div>
-                            </div>
-                            <div>
-                                <div style="font-size: 11px; color: var(--text-dimmer); margin-bottom: 4px;">VIX</div>
-                                <div style="font-size: 20px; font-weight: 600;">14.28</div>
-                            </div>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-label">上涨</div>
+                            <div class="stat-value up" id="statUp">--</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">下跌</div>
+                            <div class="stat-value down" id="statDown">--</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">成交额</div>
+                            <div class="stat-value" id="statVol">--</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">VIX</div>
+                            <div class="stat-value">14.28</div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <!-- Footer -->
-        <div class="footer">
-            <div>WindQuant Terminal · 数据来源：新浪财经</div>
-            <div id="updateTime">更新时间: --:--:--</div>
-        </div>
     </main>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div>WindQuant · 数据来源：新浪财经</div>
+        <div id="updateTime">--</div>
+    </footer>
     
     <script>
         const API = window.location.port === '5000' ? 'http://localhost:5000' : '';
@@ -643,12 +707,12 @@
             const data = await fetchAPI('/api/indices/cn');
             const list = data?.length ? data : DEMO.indices;
             list.forEach((item, i) => {
-                const el = document.getElementById(`idx${i+1}-price`);
-                const cel = document.getElementById(`idx${i+1}-change`);
-                if (el) {
-                    el.textContent = fmt(item.price);
+                const p = document.getElementById(`idx${i}`);
+                const c = document.getElementById(`idx${i}c`);
+                if (p) {
+                    p.textContent = fmt(item.price);
                     const isUp = item.change >= 0;
-                    cel.innerHTML = `<span class="${isUp ? 'status-up' : 'status-down'}">${isUp ? '+' : ''}${fmt(item.change)} (${isUp ? '+' : ''}${item.changePercent.toFixed(2)}%)</span>`;
+                    c.innerHTML = `<span class="${isUp ? 'up' : 'down'}">${isUp ? '+' : ''}${fmt(item.change)} (${isUp ? '+' : ''}${item.changePercent.toFixed(2)}%)</span>`;
                 }
             });
         }
@@ -660,12 +724,11 @@
             document.getElementById('stocksTable').innerHTML = list.map(item => `
                 <tr>
                     <td>
-                        <div class="name-text">${item.name}</div>
-                        <div class="name-code">${item.code || item.ticker}</div>
+                        <div class="stock-name">${item.name}</div>
+                        <div class="stock-code">${item.code || item.ticker}</div>
                     </td>
-                    <td class="col-price"><span class="price-text">${fmt(item.price)}</span></td>
-                    <td class="col-change"><span class="change-text ${item.change >= 0 ? 'status-up' : 'status-down'}">${item.change >= 0 ? '+' : ''}${fmt(item.change)}</span></td>
-                    <td class="col-percent"><span class="change-text ${item.change >= 0 ? 'status-up' : 'status-down'}">${item.change >= 0 ? '+' : ''}${item.changePercent.toFixed(2)}%</span></td>
+                    <td><span class="price">${fmt(item.price)}</span></td>
+                    <td><span class="change-badge ${item.change >= 0 ? 'up' : 'down'}">${item.change >= 0 ? '+' : ''}${item.changePercent.toFixed(2)}%</span></td>
                 </tr>
             `).join('');
         }
@@ -679,7 +742,7 @@
         
         async function refresh() {
             await Promise.all([loadIndices(), loadStocks(currentTab)]);
-            document.getElementById('updateTime').textContent = '更新时间: ' + new Date().toLocaleTimeString('zh-CN');
+            document.getElementById('updateTime').textContent = '更新: ' + new Date().toLocaleTimeString('zh-CN');
         }
         
         document.addEventListener('DOMContentLoaded', () => {
