@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WindQuant 金融分析平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', -apple-system, sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-card: #111827;
+            --bg-card-hover: #1a2035;
+            --accent: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.15);
+            --green: #10b981;
+            --red: #ef4444;
+            --gold: #f59e0b;
+            --purple: #8b5cf6;
+        }
+        
+        body {
+            background: var(--bg-primary);
+            color: #e2e8f0;
+        }
+        
+        .glass {
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .card {
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            background: var(--bg-card-hover);
+            border-color: rgba(59,130,246,0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        
+        .stat-up { color: var(--green); }
+        .stat-down { color: var(--red); }
+        
+        .glow-btn {
+            background: linear-gradient(135deg, #3b82f6, #6366f1);
+            box-shadow: 0 4px 20px rgba(59,130,246,0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .glow-btn:hover {
+            box-shadow: 0 6px 30px rgba(59,130,246,0.5);
+            transform: translateY(-2px);
+        }
+        
+        .nav-link {
+            color: #94a3b8;
+            transition: color 0.2s;
+        }
+        .nav-link:hover, .nav-link.active { color: #60a5fa; }
+        
+        .ticker-scroll {
+            animation: scroll 30s linear infinite;
+        }
+        @keyframes scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        
+        .ticker-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0 2rem;
+        }
+        
+        .market-status {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        .market-open { background: #10b981; box-shadow: 0 0 8px #10b981; }
+        .market-closed { background: #6b7280; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .hero-glow {
+            position: absolute;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%);
+            top: -200px; left: 50%;
+            transform: translateX(-50%);
+            pointer-events: none;
+        }
+        
+        .grid-bg {
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+        
+        .tab-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            color: #94a3b8;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .tab-btn:hover { color: #e2e8f0; }
+        .tab-btn.active {
+            background: rgba(59,130,246,0.15);
+            color: #60a5fa;
+        }
+        
+        .tooltip {
+            position: relative;
+        }
+        .tooltip::after {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 0.5rem 0.75rem;
+            background: #1f2937;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+        .tooltip:hover::after { opacity: 1; }
+        
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+    </style>
+</head>
+<body class="min-h-screen grid-bg">
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                    </svg>
+                </div>
+                <span class="text-xl font-bold gradient-text">WindQuant</span>
+            </div>
+            
+            <div class="hidden md:flex items-center gap-8">
+                <a href="#markets" class="nav-link active">市场</a>
+                <a href="#analysis" class="nav-link">分析</a>
+                <a href="#portfolio" class="nav-link">组合</a>
+                <a href="#news" class="nav-link">资讯</a>
+                <a href="#research" class="nav-link">研报</a>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2 text-sm">
+                    <span class="market-status market-closed"></span>
+                    <span class="text-gray-400">美股已休市</span>
+                </div>
+                <button class="glow-btn px-5 py-2.5 rounded-lg text-white font-medium text-sm">
+                    开始分析
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Ticker Tape -->
+    <div class="pt-20 overflow-hidden border-b border-white/5 bg-black/30">
+        <div class="ticker-scroll whitespace-nowrap py-3">
+            <span class="ticker-item">
+                <span class="text-gray-400">AAPL</span>
+                <span class="text-white font-medium">189.30</span>
+                <span class="stat-up text-sm">+1.24%</span>
+            </span>
+            <span class="ticker-item">
+                <span class="text-gray-400">NVDA</span>
+                <span class="text-white font-medium">875.28</span>
+                <span class="stat-up text-sm">+2.15%</span>
+            </span>
+            <span class="ticker-item">
+                <span class="text-gray-400">MSFT</span>
+                <span class="text-white font-medium">415.50</span>
+                <span class="stat-down text-sm">-0.32%</span>
+            </span>
+            <span class="ticker-item">
+                <span class="text-gray-400">TSLA</span>
+                <span class="text-white font-medium">177.67</span>
+                <span class="stat-up text-sm">+3.45%</span>
+            </span>
+            <span class="ticker-item">
+                <span class="text-gray-400">GOOGL</span>
+                <span class="text-white font-medium">175.98</span>
+                <span class="stat-up text-sm">+0.89%</span>
+            </span>
+            <span class="ticker-item">
+                <span class="text-gray-400">META</span>
+                <span class="text-white font-medium">528.60</span>
+                <span class="stat-up text-sm">+1.12%</span>
+            </span>
+            <span class="ticker-item">
+                <span class="text-gray-400">AMZN</span>
+                <span class="text-white font-medium">185.70</span>
+                <span class="stat-down text-sm">-0.45%</span>
+            </span>
+            <span class="ticker-item">
+                <span class="text-gray-400">BRK.B</span>
+                <span class="text-white font-medium">408.35</span>
+                <span class="stat-up text-sm">+0.28%</span>
+            </span>
+            <!-- Duplicate for seamless scroll -->
+            <span class="ticker-item">
+                <span class="text-gray-400">AAPL</span>
+                <span class="text-white font-medium">189.30</span>
+                <span class="stat-up text-sm">+1.24%</span>
+            </span>
+            <span class="ticker-item">
+                <span class="text-gray-400">NVDA</span>
+                <span class="text-white font-medium">875.28</span>
+                <span class="stat-up text-sm">+2.15%</span>
+            </span>
+            <span class="ticker-item">
+                <span class="text-gray-400">MSFT</span>
+                <span class="text-white font-medium">415.50</span>
+                <span class="stat-down text-sm">-0.32%</span>
+            </span>
+            <span class="ticker-item">
+                <span class="text-gray-400">TSLA</span>
+                <span class="text-white font-medium">177.67</span>
+                <span class="stat-up text-sm">+3.45%</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="relative pt-24 pb-20 px-6">
+        <div class="hero-glow"></div>
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm mb-6">
+                    <span class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
+                    新版本上线 · AI 驱动智能分析
+                </div>
+                <h1 class="text-5xl md:text-6xl font-bold mb-6 leading-tight">
+                    <span class="gradient-text">智能投资决策</span><br>
+                    <span class="text-white">从 WindQuant 开始</span>
+                </h1>
+                <p class="text-xl text-gray-400 max-w-2xl mx-auto mb-10">
+                    整合海量金融数据，运用先进 AI 算法，为您提供机构级量化分析服务
+                </p>
+                <div class="flex items-center justify-center gap-4">
+                    <button class="glow-btn px-8 py-4 rounded-xl text-white font-semibold text-lg">
+                        免费开始使用
+                    </button>
+                    <button class="px-8 py-4 rounded-xl border border-white/10 text-gray-300 font-medium hover:bg-white/5 transition">
+                        查看演示
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+                <div class="card rounded-2xl p-6 text-center">
+                    <div class="text-3xl font-bold text-white mb-1">10,000+</div>
+                    <div class="text-gray-400 text-sm">覆盖股票</div>
+                </div>
+                <div class="card rounded-2xl p-6 text-center">
+                    <div class="text-3xl font-bold text-white mb-1">99.9%</div>
+                    <div class="text-gray-400 text-sm">数据准确率</div>
+                </div>
+                <div class="card rounded-2xl p-6 text-center">
+                    <div class="text-3xl font-bold text-white mb-1">50+</div>
+                    <div class="text-gray-400 text-sm">量化指标</div>
+                </div>
+                <div class="card rounded-2xl p-6 text-center">
+                    <div class="text-3xl font-bold text-white mb-1">实时</div>
+                    <div class="text-gray-400 text-sm">数据更新</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Dashboard -->
+    <section id="markets" class="px-6 pb-20">
+        <div class="max-w-7xl mx-auto">
+            <!-- Section Header -->
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-white">市场概览</h2>
+                <div class="flex items-center gap-2">
+                    <span class="text-gray-500 text-sm">更新时间: 16:00 CST</span>
+                    <button class="p-2 rounded-lg hover:bg-white/5 transition">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-12 gap-6">
+                <!-- Left Column -->
+                <div class="col-span-12 lg:col-span-8 space-y-6">
+                    <!-- Market Indices -->
+                    <div class="card rounded-2xl p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-semibold text-white">主要指数</h3>
+                            <div class="flex gap-2">
+                                <button class="tab-btn active text-sm">沪深</button>
+                                <button class="tab-btn text-sm">港股</button>
+                                <button class="tab-btn text-sm">美股</button>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div class="p-4 rounded-xl bg-white/5">
+                                <div class="text-gray-400 text-sm mb-2">上证指数</div>
+                                <div class="text-xl font-bold text-white mb-1">3,285.67</div>
+                                <div class="flex items-center gap-2">
+                                    <span class="stat-down text-sm">-15.34</span>
+                                    <span class="stat-down text-sm">-0.46%</span>
+                                </div>
+                            </div>
+                            <div class="p-4 rounded-xl bg-white/5">
+                                <div class="text-gray-400 text-sm mb-2">深证成指</div>
+                                <div class="text-xl font-bold text-white mb-1">10,542.78</div>
+                                <div class="flex items-center gap-2">
+                                    <span class="stat-up text-sm">+28.12</span>
+                                    <span class="stat-up text-sm">+0.27%</span>
+                                </div>
+                            </div>
+                            <div class="p-4 rounded-xl bg-white/5">
+                                <div class="text-gray-400 text-sm mb-2">创业板</div>
+                                <div class="text-xl font-bold text-white mb-1">1,982.45</div>
+                                <div class="flex items-center gap-2">
+                                    <span class="stat-up text-sm">+12.67</span>
+                                    <span class="stat-up text-sm">+0.64%</span>
+                                </div>
+                            </div>
+                            <div class="p-4 rounded-xl bg-white/5">
+                                <div class="text-gray-400 text-sm mb-2">科创50</div>
+                                <div class="text-xl font-bold text-white mb-1">785.32</div>
+                                <div class="flex items-center gap-2">
+                                    <span class="stat-down text-sm">-5.23</span>
+                                    <span class="stat-down text-sm">-0.66%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stock Chart -->
+                    <div class="card rounded-2xl p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <div>
+                                <h3 class="text-lg font-semibold text-white">明阳智能 601615</h3>
+                                <div class="flex items-center gap-3 mt-1">
+                                    <span class="text-2xl font-bold text-white">18.52</span>
+                                    <span class="stat-up text-sm bg-green-500/10 px-2 py-1 rounded">+0.32 (+1.76%)</span>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button class="tab-btn active text-xs">日K</button>
+                                <button class="tab-btn text-xs">周K</button>
+                                <button class="tab-btn text-xs">月K</button>
+                            </div>
+                        </div>
+                        <canvas id="stockChart" height="300"></canvas>
+                    </div>
+
+                    <!-- Heatmap & Sector Performance -->
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="card rounded-2xl p-6">
+                            <h3 class="text-lg font-semibold text-white mb-4">行业分布</h3>
+                            <canvas id="sectorChart" height="200"></canvas>
+                        </div>
+                        <div class="card rounded-2xl p-6">
+                            <h3 class="text-lg font-semibold text-white mb-4">市场情绪</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="flex justify-between text-sm mb-2">
+                                        <span class="text-gray-400">做多情绪</span>
+                                        <span class="text-white font-medium">72%</span>
+                                    </div>
+                                    <div class="h-2 bg-white/10 rounded-full overflow-hidden">
+                                        <div class="h-full bg-gradient-to-r from-green-500 to-emerald-400 rounded-full" style="width: 72%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-sm mb-2">
+                                        <span class="text-gray-400">机构持仓</span>
+                                        <span class="text-white font-medium">85%</span>
+                                    </div>
+                                    <div class="h-2 bg-white/10 rounded-full overflow-hidden">
+                                        <div class="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full" style="width: 85%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-sm mb-2">
+                                        <span class="text-gray-400">北向资金</span>
+                                        <span class="text-white font-medium">+12.5亿</span>
+                                    </div>
+                                    <div class="h-2 bg-white/10 rounded-full overflow-hidden">
+                                        <div class="h-full bg-gradient-to-r from-purple-500 to-pink-400 rounded-full" style="width: 65%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-sm mb-2">
+                                        <span class="text-gray-400">波动率 VIX</span>
+                                        <span class="text-white font-medium">14.28</span>
+                                    </div>
+                                    <div class="h-2 bg-white/10 rounded-full overflow-hidden">
+                                        <div class="h-full bg-gradient-to-r from-amber-500 to-orange-400 rounded-full" style="width: 35%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="col-span-12 lg:col-span-4 space-y-6">
+                    <!-- AI Signal -->
+                    <div class="card rounded-2xl p-6 border-blue-500/20">
+                        <div class="flex items-center gap-2 mb-4">
+                            <div class="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                                </svg>
+                            </div>
+                            <h3 class="text-lg font-semibold text-white">AI 智能信号</h3>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-3 rounded-xl bg-green-500/10 border border-green-500/20">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-2xl">📈</span>
+                                    <div>
+                                        <div class="text-white font-medium">强烈买入</div>
+                                        <div class="text-gray-400 text-sm">明阳智能 601615</div>
+                                    </div>
+                                </div>
+                                <span class="text-green-400 font-bold">95分</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/20">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-2xl">⚡</span>
+                                    <div>
+                                        <div class="text-white font-medium">注意回调</div>
+                                        <div class="text-gray-400 text-sm">宁德时代 300750</div>
+                                    </div>
+                                </div>
+                                <span class="text-yellow-400 font-bold">68分</span>
+                            </div>
+                        </div>
+                        <button class="w-full mt-4 py-3 rounded-xl border border-blue-500/30 text-blue-400 font-medium hover:bg-blue-500/10 transition">
+                            查看全部信号
+                        </button>
+                    </div>
+
+                    <!-- Top Movers -->
+                    <div class="card rounded-2xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-white">热门股票</h3>
+                            <span class="text-sm text-gray-500">今日涨幅</span>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition cursor-pointer">
+                                <div>
+                                    <div class="text-white font-medium">比亚迪</div>
+                                    <div class="text-gray-500 text-sm">002594</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-white font-medium">268.50</div>
+                                    <div class="stat-up text-sm">+4.28%</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition cursor-pointer">
+                                <div>
+                                    <div class="text-white font-medium">宁德时代</div>
+                                    <div class="text-gray-500 text-sm">300750</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-white font-medium">195.32</div>
+                                    <div class="stat-up text-sm">+2.15%</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition cursor-pointer">
+                                <div>
+                                    <div class="text-white font-medium">隆基绿能</div>
+                                    <div class="text-gray-500 text-sm">601012</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-white font-medium">22.45</div>
+                                    <div class="stat-down text-sm">-1.23%</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition cursor-pointer">
+                                <div>
+                                    <div class="text-white font-medium">亿纬锂能</div>
+                                    <div class="text-gray-500 text-sm">300014</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-white font-medium">48.67</div>
+                                    <div class="stat-up text-sm">+3.45%</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition cursor-pointer">
+                                <div>
+                                    <div class="text-white font-medium">阳光电源</div>
+                                    <div class="text-gray-500 text-sm">300274</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-white font-medium">92.30</div>
+                                    <div class="stat-up text-sm">+5.67%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Tools -->
+                    <div class="card rounded-2xl p-6">
+                        <h3 class="text-lg font-semibold text-white mb-4">快捷工具</h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button class="p-4 rounded-xl bg-white/5 hover:bg-white/10 transition text-left">
+                                <div class="text-2xl mb-2">🔍</div>
+                                <div class="text-white font-medium text-sm">股票筛选</div>
+                            </button>
+                            <button class="p-4 rounded-xl bg-white/5 hover:bg-white/10 transition text-left">
+                                <div class="text-2xl mb-2">📊</div>
+                                <div class="text-white font-medium text-sm">财报分析</div>
+                            </button>
+                            <button class="p-4 rounded-xl bg-white/5 hover:bg-white/10 transition text-left">
+                                <div class="text-2xl mb-2">💹</div>
+                                <div class="text-white font-medium text-sm">估值计算</div>
+                            </button>
+                            <button class="p-4 rounded-xl bg-white/5 hover:bg-white/10 transition text-left">
+                                <div class="text-2xl mb-2">📋</div>
+                                <div class="text-white font-medium text-sm">持仓诊断</div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Analysis Section -->
+    <section id="analysis" class="px-6 pb-20">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-2xl font-bold text-white mb-6">智能分析</h2>
+            <div class="grid grid-cols-12 gap-6">
+                <div class="col-span-12 lg:col-span-6">
+                    <div class="card rounded-2xl p-6 h-full">
+                        <h3 class="text-lg font-semibold text-white mb-4">明阳智能 (601615) 估值分析</h3>
+                        <div class="space-y-4">
+                            <div class="p-4 rounded-xl bg-white/5">
+                                <div class="text-gray-400 text-sm mb-2">DCF 估值</div>
+                                <div class="flex items-end justify-between">
+                                    <div>
+                                        <div class="text-3xl font-bold text-white">¥21.35</div>
+                                        <div class="text-gray-500 text-sm">公允价值</div>
+                                    </div>
+                                    <span class="stat-up text-sm bg-green-500/10 px-2 py-1 rounded">低估 15.3%</span>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-3">
+                                <div class="p-3 rounded-xl bg-white/5 text-center">
+                                    <div class="text-gray-400 text-xs mb-1">PE (TTM)</div>
+                                    <div class="text-white font-bold">12.5</div>
+                                    <div class="text-gray-500 text-xs">行业平均 18.2</div>
+                                </div>
+                                <div class="p-3 rounded-xl bg-white/5 text-center">
+                                    <div class="text-gray-400 text-xs mb-1">PB</div>
+                                    <div class="text-white font-bold">1.82</div>
+                                    <div class="text-gray-500 text-xs">行业平均 2.1</div>
+                                </div>
+                                <div class="p-3 rounded-xl bg-white/5 text-center">
+                                    <div class="text-gray-400 text-xs mb-1">ROE</div>
+                                    <div class="text-white font-bold">14.6%</div>
+                                    <div class="text-gray-500 text-xs">行业平均 12.3%</div>
+                                </div>
+                            </div>
+                            <div class="p-4 rounded-xl border border-green-500/20 bg-green-500/5">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="text-green-400">✓</span>
+                                    <span class="text-white font-medium">投资亮点</span>
+                                </div>
+                                <ul class="space-y-2 text-gray-300 text-sm">
+                                    <li>· 海上风电龙头，受益于双碳政策</li>
+                                    <li>· 毛利率 24.5%，高于行业平均</li>
+                                    <li>· 2024 年新签订单同比增长 35%</li>
+                                    <li>· 现金流充沛，负债率持续下降</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-span-12 lg:col-span-6">
+                    <div class="card rounded-2xl p-6 h-full">
+                        <h3 class="text-lg font-semibold text-white mb-4">技术面分析</h3>
+                        <canvas id="techChart" height="250"></canvas>
+                        <div class="grid grid-cols-4 gap-3 mt-4">
+                            <div class="text-center p-3 rounded-xl bg-white/5">
+                                <div class="text-gray-400 text-xs mb-1">MA5</div>
+                                <div class="text-white font-bold">18.12</div>
+                            </div>
+                            <div class="text-center p-3 rounded-xl bg-white/5">
+                                <div class="text-gray-400 text-xs mb-1">MA20</div>
+                                <div class="text-white font-bold">17.85</div>
+                            </div>
+                            <div class="text-center p-3 rounded-xl bg-white/5">
+                                <div class="text-gray-400 text-xs mb-1">MA60</div>
+                                <div class="text-white font-bold">16.42</div>
+                            </div>
+                            <div class="text-center p-3 rounded-xl bg-white/5">
+                                <div class="text-gray-400 text-xs mb-1">RSI</div>
+                                <div class="text-white font-bold">62.5</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Research Section -->
+    <section id="research" class="px-6 pb-20">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-2xl font-bold text-white mb-6">最新研报</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="card rounded-2xl p-6">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="px-2 py-1 rounded text-xs font-medium bg-blue-500/20 text-blue-400">行业深度</span>
+                        <span class="text-gray-500 text-sm">中信建投</span>
+                    </div>
+                    <h4 class="text-white font-semibold mb-3">海上风电行业2024年投资策略</h4>
+                    <p class="text-gray-400 text-sm mb-4">受益于海风平价上网加速，2024年海上风电装机量预计同比增长60%，龙头企业订单充足...</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-500 text-sm">2024-04-15</span>
+                        <button class="text-blue-400 text-sm hover:text-blue-300">阅读全文 →</button>
+                    </div>
+                </div>
+                <div class="card rounded-2xl p-6">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="px-2 py-1 rounded text-xs font-medium bg-green-500/20 text-green-400">公司研究</span>
+                        <span class="text-gray-500 text-sm">国泰君安</span>
+                    </div>
+                    <h4 class="text-white font-semibold mb-3">明阳智能季报点评：Q1业绩超预期</h4>
+                    <p class="text-gray-400 text-sm mb-4">公司2024年Q1营收45.2亿元，同比增长28.5%，毛利率环比提升2.3个百分点，大兆瓦机型占比持续提升...</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-500 text-sm">2024-04-12</span>
+                        <button class="text-blue-400 text-sm hover:text-blue-300">阅读全文 →</button>
+                    </div>
+                </div>
+                <div class="card rounded-2xl p-6">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="px-2 py-1 rounded text-xs font-medium bg-purple-500/20 text-purple-400">量化策略</span>
+                        <span class="text-gray-500 text-sm">WindQuant</span>
+                    </div>
+                    <h4 class="text-white font-semibold mb-3">基于多因子的风电板块选股模型</h4>
+                    <p class="text-gray-400 text-sm mb-4">本文构建了一套适用于新能源板块的量化选股模型，回测年化收益 28.6%，夏普比率 1.82...</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-500 text-sm">2024-04-10</span>
+                        <button class="text-blue-400 text-sm hover:text-blue-300">阅读全文 →</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="px-6 pb-20">
+        <div class="max-w-5xl mx-auto">
+            <div class="card rounded-3xl p-12 text-center relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-blue-600/20"></div>
+                <div class="relative z-10">
+                    <h2 class="text-3xl font-bold text-white mb-4">准备好提升您的投资效率了吗？</h2>
+                    <p class="text-gray-400 text-lg mb-8 max-w-2xl mx-auto">
+                        加入 WindQuant，体验 AI 驱动的智能金融分析，让每一次投资决策都有数据支撑
+                    </p>
+                    <div class="flex items-center justify-center gap-4">
+                        <button class="glow-btn px-8 py-4 rounded-xl text-white font-semibold text-lg">
+                            免费开始
+                        </button>
+                        <button class="px-8 py-4 rounded-xl border border-white/10 text-gray-300 font-medium hover:bg-white/5 transition">
+                            联系销售
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/5 px-6 py-12">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-4 gap-8 mb-8">
+                <div>
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                            </svg>
+                        </div>
+                        <span class="text-lg font-bold text-white">WindQuant</span>
+                    </div>
+                    <p class="text-gray-400 text-sm">AI 驱动的智能金融分析平台</p>
+                </div>
+                <div>
+                    <h4 class="text-white font-medium mb-4">产品</h4>
+                    <ul class="space-y-2 text-gray-400 text-sm">
+                        <li><a href="#" class="hover:text-white transition">智能选股</a></li>
+                        <li><a href="#" class="hover:text-white transition">量化策略</a></li>
+                        <li><a href="#" class="hover:text-white transition">风险分析</a></li>
+                        <li><a href="#" class="hover:text-white transition">API 接口</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-white font-medium mb-4">关于我们</h4>
+                    <ul class="space-y-2 text-gray-400 text-sm">
+                        <li><a href="#" class="hover:text-white transition">公司介绍</a></li>
+                        <li><a href="#" class="hover:text-white transition">加入团队</a></li>
+                        <li><a href="#" class="hover:text-white transition">联系我们</a></li>
+                        <li><a href="#" class="hover:text-white transition">博客</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-white font-medium mb-4">法律</h4>
+                    <ul class="space-y-2 text-gray-400 text-sm">
+                        <li><a href="#" class="hover:text-white transition">服务条款</a></li>
+                        <li><a href="#" class="hover:text-white transition">隐私政策</a></li>
+                        <li><a href="#" class="hover:text-white transition">免责声明</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-white/5 pt-8 flex items-center justify-between">
+                <p class="text-gray-500 text-sm">© 2024 WindQuant. All rights reserved.</p>
+                <p class="text-gray-500 text-sm">投资有风险，决策需谨慎</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Stock Price Chart
+        const stockCtx = document.getElementById('stockChart').getContext('2d');
+        const stockData = {
+            labels: ['9:30', '10:00', '10:30', '11:00', '11:30', '13:00', '13:30', '14:00', '14:30', '15:00'],
+            datasets: [{
+                label: '明阳智能',
+                data: [18.20, 18.35, 18.28, 18.45, 18.52, 18.48, 18.55, 18.62, 18.50, 18.52],
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 0,
+                pointHoverRadius: 6,
+                pointHoverBackgroundColor: '#3b82f6',
+            }]
+        };
+        new Chart(stockCtx, {
+            type: 'line',
+            data: stockData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: '#6b7280' }
+                    },
+                    y: {
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: '#6b7280' }
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                }
+            }
+        });
+
+        // Sector Chart
+        const sectorCtx = document.getElementById('sectorChart').getContext('2d');
+        new Chart(sectorCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['新能源', '半导体', '医药', '消费', '金融', '其他'],
+                datasets: [{
+                    data: [35, 22, 15, 12, 10, 6],
+                    backgroundColor: [
+                        '#10b981',
+                        '#3b82f6',
+                        '#8b5cf6',
+                        '#f59e0b',
+                        '#ef4444',
+                        '#6b7280'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { color: '#9ca3af', padding: 12, font: { size: 11 } }
+                    }
+                },
+                cutout: '65%'
+            }
+        });
+
+        // Technical Chart
+        const techCtx = document.getElementById('techChart').getContext('2d');
+        const techData = {
+            labels: Array.from({length: 30}, (_, i) => i + 1),
+            datasets: [
+                {
+                    label: 'MA5',
+                    data: [17.2, 17.3, 17.4, 17.5, 17.6, 17.7, 17.75, 17.8, 17.85, 17.9, 17.95, 18.0, 18.0, 18.05, 18.1, 18.1, 18.12, 18.15, 18.18, 18.2, 18.22, 18.25, 18.28, 18.3, 18.32, 18.35, 18.38, 18.4, 18.45, 18.52],
+                    borderColor: '#f59e0b',
+                    borderWidth: 1.5,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    fill: false
+                },
+                {
+                    label: 'MA20',
+                    data: [16.8, 16.85, 16.9, 16.95, 17.0, 17.05, 17.1, 17.15, 17.2, 17.25, 17.3, 17.35, 17.4, 17.42, 17.45, 17.5, 17.55, 17.6, 17.65, 17.7, 17.73, 17.76, 17.8, 17.82, 17.85, 17.88, 17.9, 17.93, 17.95, 18.00],
+                    borderColor: '#8b5cf6',
+                    borderWidth: 1.5,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    fill: false
+                },
+                {
+                    label: '收盘价',
+                    data: [17.5, 17.3, 17.8, 17.6, 17.9, 17.7, 18.0, 17.85, 18.2, 18.0, 18.3, 18.1, 18.4, 18.2, 18.5, 18.3, 18.6, 18.4, 18.7, 18.5, 18.8, 18.6, 18.9, 18.7, 19.0, 18.8, 19.1, 18.9, 19.2, 19.0],
+                    borderColor: '#10b981',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    fill: true,
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)'
+                }
+            ]
+        };
+        new Chart(techCtx, {
+            type: 'line',
+            data: techData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: { color: '#9ca3af', boxWidth: 12, padding: 8, font: { size: 10 } }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255,255,255,0.03)' },
+                        ticks: { color: '#6b7280', maxTicksLimit: 10 }
+                    },
+                    y: {
+                        grid: { color: 'rgba(255,255,255,0.03)' },
+                        ticks: { color: '#6b7280' }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
